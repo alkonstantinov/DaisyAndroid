@@ -1,9 +1,15 @@
 package com.ipltd_bg.daisyandroid;
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,12 +26,23 @@ import com.ipltd_bg.daisyandroid.BoundService.Data.OperatorData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.StartFiskData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.TotalFiskData;
 
+import java.io.Console;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import static android.R.id.message;
 
 public class MainActivity extends AppCompatActivity {
 
     DaisyBlueTooth mService;
+    DaisyUsb mUsbService;
     boolean mBound = false;
+    boolean mUsbBound = false;
+
+    UsbManager usbManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -220,7 +237,6 @@ public class MainActivity extends AppCompatActivity {
                     mService.PrintNoFisk("чушки");
 
 
-
                     mService.EndNoFisk();
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
@@ -248,6 +264,38 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+        final Button bConnectNFP = (Button) findViewById(R.id.bConnectNFP);
+        bConnectNFP.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+                if (!mUsbService.Connect(manager))
+                    Toast.makeText(v.getContext(), "cannot connect",
+                            Toast.LENGTH_SHORT).show();
+
+            }
+
+        });
+
+        final Button bPrintNFP = (Button) findViewById(R.id.bPrintNFP);
+        bPrintNFP.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                mUsbService.PrintString("един ред дейба");
+                mUsbService.PrintEmptyLine();
+                mUsbService.Feed(5);
+
+
+            }
+
+        });
+        final Button bDiscNFP = (Button) findViewById(R.id.bDiscNFP);
+        bDiscNFP.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                mUsbService.Disconnect();
+
+
+            }
+
+        });
 
     }
 
@@ -259,6 +307,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, DaisyBlueTooth.class);
         //startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        bindService(intent, mUsbConnection, Context.BIND_AUTO_CREATE);
     }
 
 
@@ -269,6 +318,11 @@ public class MainActivity extends AppCompatActivity {
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
+        }
+
+        if (mUsbBound) {
+            unbindService(mUsbConnection);
+            mUsbBound = false;
         }
     }
 
@@ -290,6 +344,24 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             mBound = false;
+        }
+    };
+
+    private ServiceConnection mUsbConnection = new ServiceConnection() {
+
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            DaisyUsb.LocalBinder binder = (DaisyUsb.LocalBinder) service;
+            mUsbService = binder.getService();
+            mUsbBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mUsbBound = false;
         }
     };
 }

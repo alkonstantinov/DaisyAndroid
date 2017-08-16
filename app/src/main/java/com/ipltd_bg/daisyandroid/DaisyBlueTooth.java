@@ -1045,17 +1045,6 @@ public class DaisyBlueTooth extends Service {
         for (byte b : cd.getAddress().getBytes("cp1251"))
             alData.add(b);
 
-        data = GetAsArray(alData);
-
-        try {
-            result = SendCommand((byte) 0x2B, data);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         if (result != null) {
             SetLastError(result);
         }

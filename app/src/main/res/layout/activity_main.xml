@@ -10,7 +10,7 @@
         android:layout_width="368dp"
         android:layout_height="624dp"
         android:layout_alignParentBottom="true"
-        android:rowCount="11"
+        android:rowCount="14"
         android:columnCount="1"
         tools:layout_editor_absoluteY="8dp"
         tools:layout_editor_absoluteX="8dp">
@@ -105,6 +105,28 @@
             android:text="Set data"
             android:layout_column="0"
             android:layout_row="10"/>
+        <Button
+            android:id="@+id/bConnectNFP"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect NFP"
+            android:layout_column="0"
+            android:layout_row="11"/>
+        <Button
+            android:id="@+id/bPrintNFP"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Print NFP"
+            android:layout_column="0"
+            android:layout_row="12"/>
+
+        <Button
+            android:id="@+id/bDiscNFP"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DisConnect NFP"
+            android:layout_column="0"
+            android:layout_row="13"/>
     </GridLayout>
 
 
