@@ -281,7 +281,10 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 mUsbService.PrintString("един ред дейба");
                 mUsbService.PrintEmptyLine();
-                mUsbService.Feed(5);
+                mUsbService.PrintBoldString("Важен ред дейба");
+                mUsbService.PrintUnderLinedString("Важен ред дейба");
+
+                mUsbService.Feed(150);
 
 
             }
@@ -307,6 +310,7 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, DaisyBlueTooth.class);
         //startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        intent = new Intent(this, DaisyUsb.class);
         bindService(intent, mUsbConnection, Context.BIND_AUTO_CREATE);
     }
 

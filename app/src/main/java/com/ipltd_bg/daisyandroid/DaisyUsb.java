@@ -166,6 +166,60 @@ public class DaisyUsb extends Service {
 
     }
 
+    public void PrintBoldString(String text) {
+        byte[] data = new byte[]{(byte) 27,
+                (byte)69,
+                (byte)1};
+        connection.bulkTransfer(epoint, data, data.length, 100);
+
+
+        List<Byte> alData = new ArrayList<Byte>();
+        try {
+            for (byte b : text.getBytes("cp1251"))
+                alData.add(b);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        alData.add((byte) 13);
+
+        data = new byte[alData.size()];
+        for (int i = 0; i < alData.size(); i++)
+            data[i] = alData.get(i);
+        connection.bulkTransfer(epoint, data, data.length, 100);
+        data = new byte[]{(byte) 27,
+                (byte)69,
+                (byte)0};
+        connection.bulkTransfer(epoint, data, data.length, 100);
+
+    }
+
+    public void PrintUnderLinedString(String text) {
+        byte[] data = new byte[]{(byte) 27,
+                (byte)45,
+                (byte)50};
+        connection.bulkTransfer(epoint, data, data.length, 100);
+
+
+        List<Byte> alData = new ArrayList<Byte>();
+        try {
+            for (byte b : text.getBytes("cp1251"))
+                alData.add(b);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        alData.add((byte) 13);
+
+        data = new byte[alData.size()];
+        for (int i = 0; i < alData.size(); i++)
+            data[i] = alData.get(i);
+        connection.bulkTransfer(epoint, data, data.length, 100);
+        data = new byte[]{(byte) 27,
+                (byte)45,
+                (byte)48};
+        connection.bulkTransfer(epoint, data, data.length, 100);
+
+    }
+
     public void PrintEmptyLine() {
 
         byte[] data = new byte[]{(byte) 13};
@@ -176,23 +230,21 @@ public class DaisyUsb extends Service {
 
     public void Feed(Integer n) {
         byte lines = 0;
-        try {
-            lines = n.toString().getBytes("cp1251")[0];
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        lines = n.byteValue();
+//        try {
+//            //lines = n.toString().getBytes("cp1251")[0];
+//
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
         byte[] data = new byte[]{(byte) 27,
-                (byte)100,
+                (byte)74,
                 lines};
         connection.bulkTransfer(epoint, data, data.length, 100);
 
 
     }
 
-    public void PrintBold(String text) {
-
-
-    }
 
     public void Disconnect() {
         if (this.Status != DaisyConnectionStatus.Connected)
