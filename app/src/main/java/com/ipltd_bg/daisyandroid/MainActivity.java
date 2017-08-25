@@ -38,6 +38,7 @@ import static android.R.id.message;
 public class MainActivity extends AppCompatActivity {
 
     DaisyBlueTooth mService;
+    DatecsNFPBlueTooth mDNFPService;
     DaisyUsb mUsbService;
     boolean mBound = false;
     boolean mUsbBound = false;
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         bConnect.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
 
-                if (!mService.Connect())
+                if (!mService.Connect("eXpert:389910"))
                     Toast.makeText(v.getContext(), "cannot connect",
                             Toast.LENGTH_SHORT).show();
 
@@ -300,6 +301,49 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+
+        Button bConnectDatecsNFP = (Button) findViewById(R.id.bConnectDatecsNFP);
+        bConnectDatecsNFP.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                if (!mDNFPService.Connect("DPP-450"))
+                    Toast.makeText(v.getContext(), "cannot connect",
+                            Toast.LENGTH_SHORT).show();
+
+            }
+
+        });
+        Button bPrintDatecsNFP = (Button) findViewById(R.id.bPrintDatecsNFP);
+        bPrintDatecsNFP.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintLine("Левски шампион");
+                mDNFPService.PrintNewLine();
+                mDNFPService.PrintNewLine();
+                mDNFPService.PrintImportantLine("Завинаги");
+                mDNFPService.PrintFeed((byte)200);
+
+            }
+
+        });
+        Button bDiscDatecsNFP = (Button) findViewById(R.id.bDiscDatecsNFP);
+        bDiscDatecsNFP.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                mDNFPService.Disconnect();
+
+            }
+
+        });
     }
 
     @Override
@@ -312,6 +356,9 @@ public class MainActivity extends AppCompatActivity {
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         intent = new Intent(this, DaisyUsb.class);
         bindService(intent, mUsbConnection, Context.BIND_AUTO_CREATE);
+
+        intent = new Intent(this, DatecsNFPBlueTooth.class);
+        bindService(intent, mDatecsNFPConnection, Context.BIND_AUTO_CREATE);
     }
 
 
@@ -342,6 +389,24 @@ public class MainActivity extends AppCompatActivity {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             DaisyBlueTooth.LocalBinder binder = (DaisyBlueTooth.LocalBinder) service;
             mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
+
+    private ServiceConnection mDatecsNFPConnection = new ServiceConnection() {
+
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            DatecsNFPBlueTooth.LocalBinder binder = (DatecsNFPBlueTooth.LocalBinder) service;
+            mDNFPService = binder.getService();
             mBound = true;
         }
 

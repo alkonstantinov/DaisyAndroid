@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -87,7 +88,7 @@ public class DaisyBlueTooth extends Service {
     private final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private BluetoothSocket mmSocket;
-    private final BluetoothDevice mmDevice;
+    private BluetoothDevice mmDevice;
 
     //Входящ поток
     private InputStream mmInStream = null;
@@ -98,21 +99,6 @@ public class DaisyBlueTooth extends Service {
 
     //Конструктор
     public DaisyBlueTooth() {
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
-            // Device does not support Bluetooth
-            this.Status = DaisyConnectionStatus.NotAbleToConnect;
-        }
-
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-
-        if (pairedDevices.size() != 1) {
-            // More than one device paired
-            this.Status = DaisyConnectionStatus.NotAbleToConnect;
-        }
-
-
-        mmDevice = pairedDevices.iterator().next();
 
 //
 
@@ -135,9 +121,32 @@ public class DaisyBlueTooth extends Service {
     }
 
     //Осъществява връзка с устройството
-    public boolean Connect() {
+    public boolean Connect(String deviceName) {
 
-        if (this.Status != DaisyConnectionStatus.Disconnected)
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            // Device does not support Bluetooth
+            this.Status = DaisyConnectionStatus.NotAbleToConnect;
+        }
+
+        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
+        if (pairedDevices.size() == 0) {
+            // More than one device paired
+            this.Status = DaisyConnectionStatus.NotAbleToConnect;
+        }
+        Iterator<BluetoothDevice> iter = pairedDevices.iterator();
+        while (iter.hasNext()) {
+            mmDevice = iter.next();
+            if (mmDevice.getName().equals(deviceName)) {
+                break;
+            } else
+                mmDevice = null;
+
+        }
+
+
+        if (mmDevice == null || this.Status != DaisyConnectionStatus.Disconnected)
             return false;
 
         BluetoothSocket tmp = null;
