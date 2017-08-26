@@ -7,9 +7,9 @@ import com.ipltd_bg.daisyandroid.Enums.ParagraphAlignment;
  */
 
 public class FontInfo {
-    private boolean big;
-    private boolean bold;
-    private boolean underline;
+    private boolean big;//Двоен шрифт
+    private boolean bold;//болд
+    private boolean underline;//подчертан
 
     public boolean isBig() {
         return big;

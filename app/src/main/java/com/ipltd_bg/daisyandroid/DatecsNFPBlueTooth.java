@@ -271,6 +271,7 @@ public class DatecsNFPBlueTooth extends Service {
     }
 
 
+    //настройва шрифта - докато не се промени остава настроения
     public boolean SetFont(FontInfo info) {
         if (this.Status != DaisyConnectionStatus.Connected)
             return false;
@@ -288,11 +289,10 @@ public class DatecsNFPBlueTooth extends Service {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
         return true;
     }
 
+    //Как да е подравнен текста - изпълнява се за всеки ред! след реда връща ляво подравнено
     public boolean SetAlignment(ParagraphAlignment alignment) {
         if (this.Status != DaisyConnectionStatus.Connected)
             return false;
