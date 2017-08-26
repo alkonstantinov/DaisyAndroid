@@ -21,10 +21,12 @@ import com.ipltd_bg.daisyandroid.BoundService.Data.ArticleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.ArticleSaleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.CompanyData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.DailyReportData;
+import com.ipltd_bg.daisyandroid.BoundService.Data.FontInfo;
 import com.ipltd_bg.daisyandroid.BoundService.Data.FreeSaleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.OperatorData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.StartFiskData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.TotalFiskData;
+import com.ipltd_bg.daisyandroid.Enums.ParagraphAlignment;
 
 import java.io.Console;
 import java.io.UnsupportedEncodingException;
@@ -317,20 +319,30 @@ public class MainActivity extends AppCompatActivity {
         bPrintDatecsNFP.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
 
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
-                mDNFPService.PrintLine("Левски шампион");
+                FontInfo info = new FontInfo();
+                info.setBig(true);
+                info.setUnderline(true);
+                info.setBold(true);
+                mDNFPService.SetFont(info);
+                mDNFPService.SetAlignment(ParagraphAlignment.Center);
+                mDNFPService.PrintLine("Центрирано подчертано болд голямо");
+
+                info.setBig(false);
+                info.setUnderline(false);
+                info.setBold(true);
+                mDNFPService.SetFont(info);
+                mDNFPService.SetAlignment(ParagraphAlignment.Right);
+                mDNFPService.PrintLine("Дясно болд");
+                info.setBig(false);
+                info.setUnderline(false);
+                info.setBold(false);
+                mDNFPService.SetFont(info);
+                mDNFPService.SetAlignment(ParagraphAlignment.Left);
+                mDNFPService.PrintLine("Лявно малко нормално");
+
                 mDNFPService.PrintNewLine();
                 mDNFPService.PrintNewLine();
-                mDNFPService.PrintImportantLine("Завинаги");
-                mDNFPService.PrintFeed((byte)200);
+                mDNFPService.PrintFeed((byte) 200);
 
             }
 

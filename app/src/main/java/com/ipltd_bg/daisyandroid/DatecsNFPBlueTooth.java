@@ -13,11 +13,13 @@ import com.ipltd_bg.daisyandroid.BoundService.Data.ArticleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.ArticleSaleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.CompanyData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.DailyReportData;
+import com.ipltd_bg.daisyandroid.BoundService.Data.FontInfo;
 import com.ipltd_bg.daisyandroid.BoundService.Data.FreeSaleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.OperatorData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.StartFiskData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.TotalFiskData;
 import com.ipltd_bg.daisyandroid.Enums.DaisyConnectionStatus;
+import com.ipltd_bg.daisyandroid.Enums.ParagraphAlignment;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -245,7 +247,7 @@ public class DatecsNFPBlueTooth extends Service {
         }
         lText.add((byte) 0xA);
         try {
-            mmOutStream.write(new byte[]{0x1b, 0x21, (byte) 0x0});
+            //mmOutStream.write(new byte[]{0x1b, 0x21, (byte) 0x0});
             mmOutStream.write(ListToArr(lText));
         } catch (IOException e) {
             e.printStackTrace();
@@ -259,7 +261,7 @@ public class DatecsNFPBlueTooth extends Service {
             return false;
 
         try {
-            mmOutStream.write(new byte[]{0x1b, 0x21, (byte) 0x0});
+            //mmOutStream.write(new byte[]{0x1b, 0x21, (byte) 0x0});
             mmOutStream.write(new byte[]{(byte) 0xA});
         } catch (IOException e) {
             e.printStackTrace();
@@ -269,28 +271,77 @@ public class DatecsNFPBlueTooth extends Service {
     }
 
 
-    public boolean PrintImportantLine(String line) {
+    public boolean SetFont(FontInfo info) {
         if (this.Status != DaisyConnectionStatus.Connected)
             return false;
 
-        List<Byte> lText = new ArrayList<Byte>();
+        int bt = 0;
+        if (!info.isBig())
+            bt += 1;
+        if (info.isBold())
+            bt += 8;
+        if (info.isUnderline())
+            bt += 128;
         try {
-            for (byte b : line.getBytes("cp1251"))
-                lText.add(b);
-        } catch (UnsupportedEncodingException e) {
+            mmOutStream.write(new byte[]{0x1b, 0x21, (byte) bt});
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        lText.add((byte) 0xA);
-        try {
-            mmOutStream.write(new byte[]{0x1b, 0x21, (byte) 0x9D});
 
-            mmOutStream.write(ListToArr(lText));
+
+        return true;
+    }
+
+    public boolean SetAlignment(ParagraphAlignment alignment) {
+        if (this.Status != DaisyConnectionStatus.Connected)
+            return false;
+
+        int bt = 0;
+        switch (alignment) {
+            case Left:
+                bt = 0;
+                break;
+            case Center:
+                bt = 1;
+                break;
+            case Right:
+                bt = 2;
+                break;
+        }
+        try {
+            mmOutStream.write(new byte[]{0x1b, 0x61, (byte) bt});
+
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return true;
     }
+
+//    //00000000
+//    public boolean PrintImportantLine(String line) {
+//        if (this.Status != DaisyConnectionStatus.Connected)
+//            return false;
+//
+//        List<Byte> lText = new ArrayList<Byte>();
+//        try {
+//            for (byte b : line.getBytes("cp1251"))
+//                lText.add(b);
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
+//        lText.add((byte) 0xA);
+//        try {
+//            mmOutStream.write(new byte[]{0x1b, 0x21, (byte) 0x9D});
+//
+//            mmOutStream.write(ListToArr(lText));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        return true;
+//    }
 
     public boolean PrintFeed(byte n) {
         if (this.Status != DaisyConnectionStatus.Connected)
