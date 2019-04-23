@@ -22,6 +22,8 @@
         <service android:name=".DaisyBlueTooth"></service>
         <service android:name=".DatecsNFPBlueTooth"></service>
         <service android:name=".DaisyUsb"></service>
+        <service android:name=".DaisyBarcodeBlueTooth"></service>
+
     </application>
 
 </manifest>

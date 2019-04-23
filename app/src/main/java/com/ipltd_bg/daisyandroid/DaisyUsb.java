@@ -245,6 +245,27 @@ public class DaisyUsb extends Service {
 
     }
 
+    public void CutPaperPartially() {
+        byte lines = 0;
+
+//        try {
+//            //lines = n.toString().getBytes("cp1251")[0];
+//
+//        } catch (UnsupportedEncodingException e) {
+//            e.printStackTrace();
+//        }
+        byte[] data = new byte[]{(byte) 29,
+                (byte)86,
+                (byte)1};
+        connection.bulkTransfer(epoint, data, data.length, 100);
+        data = new byte[]{(byte) 27,
+                (byte)109};
+        connection.bulkTransfer(epoint, data, data.length, 100);
+
+
+
+    }
+
 
     public void Disconnect() {
         if (this.Status != DaisyConnectionStatus.Connected)

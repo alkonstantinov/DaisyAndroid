@@ -105,9 +105,8 @@ public class FreeSaleData {
 
 
     public void setPercent(double percent) {
-        if (percent >= 0) {
-            if (percent > 0)
-                setNetto(0);
+        if (percent != 0) {
+            setNetto(0);
             Percent = percent;
         }
     }
@@ -117,9 +116,8 @@ public class FreeSaleData {
     }
 
     public void setNetto(double netto) {
-        if (netto >= 0) {
-            if (netto > 0)
-                setPercent(0);
+        if (netto != 0) {
+            setPercent(0);
             Netto = netto;
         }
 

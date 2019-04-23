@@ -9,6 +9,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.ipltd_bg.daisyandroid.BoundService.Data.ArticleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.ArticleSaleData;
@@ -18,6 +19,8 @@ import com.ipltd_bg.daisyandroid.BoundService.Data.FreeSaleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.OperatorData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.StartFiskData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.TotalFiskData;
+import com.ipltd_bg.daisyandroid.Classes.AddRemoveSums;
+import com.ipltd_bg.daisyandroid.Classes.DaisyDiagnosticData;
 import com.ipltd_bg.daisyandroid.Enums.DaisyConnectionStatus;
 
 import java.io.IOException;
@@ -274,6 +277,8 @@ public class DaisyBlueTooth extends Service {
             cmd[9 + dataSize] = 0x03;
 
             mmOutStream.write(cmd);
+
+            LogArray("Write:", cmd);
             Thread.sleep(sleepBetweenWriteAndRead);
             byte[] resp = new byte[4096];
             int bytesRead = mmInStream.read(resp);
@@ -284,12 +289,21 @@ public class DaisyBlueTooth extends Service {
                 result = GetResponse(resp, bytesRead);
             }
 
-
+            LogArray("Read:", result);
             return result;
         }
     }
 
-    //Отпечатва статус на устройството
+    private void LogArray(String label, byte[] arr) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : arr) {
+            sb.append(String.format("%02x", b) + "|");
+        }
+
+        Log.d("Array", label + " " + sb.toString());
+    }
+
+    //Отрязване на хартия
     public byte[] PrintStatus() {
         if (this.Status != DaisyConnectionStatus.Connected)
             return null;
@@ -480,6 +494,35 @@ public class DaisyBlueTooth extends Service {
 
     }
 
+    //Отпечатва статус на устройството
+    public boolean CutPaper() {
+        if (this.Status != DaisyConnectionStatus.Connected)
+            return false;
+
+        List<Byte> alData = new ArrayList<Byte>();
+        alData.add((byte) '1');//!!!!!!!!!!!!!!!!!!!!!!!!!!
+//ili
+        alData.add((byte) 1);
+
+        byte[] data = GetAsArray(alData);
+
+
+        byte[] result = null;
+        try {
+            result = SendCommand((byte) 0x2D, data);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (result != null) {
+            SetLastError(result);
+            this.Status = DaisyConnectionStatus.Connected;
+        }
+        return result != null;
+    }
 
     //Отказва касова бележка
     public boolean CancelFisk() {
@@ -514,12 +557,33 @@ public class DaisyBlueTooth extends Service {
         alData.add((byte) ',');
         for (byte b : sfd.getPassword().getBytes("cp1251"))
             alData.add(b);
-        if (sfd.getInvoice()) {
-            alData.add((byte) ',');
-            alData.add((byte) '1');
-            alData.add((byte) ',');
-            alData.add((byte) 'I');
+        alData.add((byte) ',');
+        for (byte b : sfd.getUniqueSellingNumber().getBytes("cp1251"))
+            alData.add(b);
+
+
+        switch (sfd.getMode()) {
+            case 2:
+                alData.add((byte) 0x09);
+                alData.add((byte) 'I');
+                break;
+            case 3:
+                alData.add((byte) 'R');
+                alData.add((byte) '0');
+                alData.add((byte) ',');
+                for (byte b : sfd.getDocLink().getBytes("cp1251"))
+                    alData.add(b);
+                alData.add((byte) ',');
+                for (byte b : sfd.getDocDT().getBytes("cp1251"))
+                    alData.add(b);
+                alData.add((byte) 0x09);
+                for (byte b : sfd.getFiskMem().getBytes("cp1251"))
+                    alData.add(b);
+
+                break;
         }
+
+
         byte[] data = GetAsArray(alData);
 
         try {
@@ -1053,6 +1117,158 @@ public class DaisyBlueTooth extends Service {
         alData.add((byte) '1');
         for (byte b : cd.getAddress().getBytes("cp1251"))
             alData.add(b);
+
+        if (result != null) {
+            SetLastError(result);
+        }
+        return result != null;
+    }
+
+
+    //Променя име и адрес на фирма
+    public boolean PrintTestConnection() throws UnsupportedEncodingException {
+        if (this.Status != DaisyConnectionStatus.Connected)
+            return false;
+        byte[] result = null;
+        List<Byte> alData = new ArrayList<Byte>();
+        for (byte b : "Test connection successful".getBytes("cp1251"))
+            alData.add(b);
+
+        byte[] data = GetAsArray(alData);
+
+        try {
+            result = SendCommand((byte) 0x2A, data);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+        if (result != null) {
+            SetLastError(result);
+        }
+        return result != null;
+    }
+
+
+    private ArrayList<String> GetStringInfo(byte[] data) {
+        int position = 0;
+        ArrayList<String> result = new ArrayList<>();
+
+        while (position < data.length) {
+            StringBuilder sb = new StringBuilder();
+            while (position < data.length && data[position] != (byte) 0x20 && data[position] != (byte) ',') {
+                sb.append((char) data[position]);
+                position++;
+            }
+            result.add(sb.toString());
+            position++;
+        }
+        return result;
+    }
+
+
+    public DaisyDiagnosticData GetDiagnosticData() {
+
+        if (this.Status != DaisyConnectionStatus.Connected)
+            return null;
+        byte[] result = null;
+        byte[] inputData = new byte[]{(byte) '1'};
+
+        try {
+            result = SendCommand((byte) 0x5A, inputData);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        if (result != null) {
+            SetLastError(result);
+            this.Status = DaisyConnectionStatus.InNoFisk;
+        }
+
+        ArrayList<String> datas = GetStringInfo(result);
+
+        DaisyDiagnosticData data = new DaisyDiagnosticData();
+        data.setFirmwareRev(datas.get(1));
+        data.setFirmwareDate(datas.get(2));
+        data.setFirmwareTime(datas.get(3));
+        data.setChekSum(datas.get(4));
+        data.setSw(datas.get(5));
+        data.setCountry(datas.get(6));
+        data.setSerNum(datas.get(7));
+        data.setFМ(datas.get(8));
+
+
+        return data;
+
+    }
+
+
+    public String GetLastFisk() {
+        if (this.Status != DaisyConnectionStatus.Connected)
+            return "";
+        byte[] result = null;
+        byte[] inputData = new byte[]{(byte) 'T'};
+        try {
+            result = SendCommand((byte) 0x40, inputData);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 4; i < result.length - 13; i++)
+            sb.append((char) result[i]);
+
+
+        if (result != null) {
+            SetLastError(result);
+            this.Status = DaisyConnectionStatus.Connected;
+        }
+        return sb.toString();
+    }
+
+
+    //Променя име и адрес на фирма
+    public boolean AddRemoveSum(AddRemoveSums ars) throws UnsupportedEncodingException {
+        if (this.Status != DaisyConnectionStatus.Connected)
+            return false;
+        byte[] result = null;
+        List<Byte> alData = new ArrayList<Byte>();
+        for (byte b : (ars.getSum() + "").getBytes("cp1251"))
+            alData.add(b);
+
+        alData.add((byte)',');
+        for (byte b : ars.getText1().getBytes("cp1251"))
+            alData.add(b);
+        alData.add((byte)0x0A);
+        for (byte b : ars.getText2().getBytes("cp1251"))
+            alData.add(b);
+        alData.add((byte)0x09);
+
+
+
+
+        byte[] data = GetAsArray(alData);
+
+        try {
+            result = SendCommand((byte) 0x46, data);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
 
         if (result != null) {
             SetLastError(result);

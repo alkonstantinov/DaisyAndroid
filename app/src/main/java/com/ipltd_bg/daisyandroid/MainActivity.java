@@ -1,9 +1,12 @@
 package com.ipltd_bg.daisyandroid;
 
 import android.app.PendingIntent;
+import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -13,6 +16,8 @@ import android.hardware.usb.UsbManager;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -26,6 +31,7 @@ import com.ipltd_bg.daisyandroid.BoundService.Data.FreeSaleData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.OperatorData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.StartFiskData;
 import com.ipltd_bg.daisyandroid.BoundService.Data.TotalFiskData;
+import com.ipltd_bg.daisyandroid.Classes.AddRemoveSums;
 import com.ipltd_bg.daisyandroid.Enums.ParagraphAlignment;
 
 import java.io.Console;
@@ -40,22 +46,48 @@ import static android.R.id.message;
 public class MainActivity extends AppCompatActivity {
 
     DaisyBlueTooth mService;
+    DaisyBarcodeBlueTooth mBarcodeService;
+
     DatecsNFPBlueTooth mDNFPService;
     DaisyUsb mUsbService;
     boolean mBound = false;
     boolean mUsbBound = false;
-
+    boolean mBarcodeBound = false;
     UsbManager usbManager;
+    String barcodeRead = "";
+
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (event.getDevice().getName().equals("General Bluetooth HID Barcode Scanner")) {
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_TAB:
+                    Toast.makeText(this, barcodeRead, Toast.LENGTH_SHORT).show();
+                    barcodeRead = "";
+                    break;
+                default:
+                    barcodeRead += event.getNumber();
+                    break;
+
+
+            }
+
+            return true;
+        } else
+            return false;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
         Button bConnect = (Button) findViewById(R.id.bConnect);
         bConnect.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
 
-                if (!mService.Connect("eXpert:389910"))
+                if (!mService.Connect("ECR00000000"))
                     Toast.makeText(v.getContext(), "cannot connect",
                             Toast.LENGTH_SHORT).show();
 
@@ -151,14 +183,21 @@ public class MainActivity extends AppCompatActivity {
         bNoFiskSale.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
                 StartFiskData sfd = new StartFiskData();
-                sfd.setClerkNum(3);
-                sfd.setPassword("3");
-                sfd.setInvoice(false);
+                sfd.setClerkNum(20);
+                sfd.setPassword("9999");
+                sfd.setMode(0);
+                sfd.setReason(0);
+                sfd.setDocLink("0000026");
+                sfd.setDocDT("16-04-19 14:35");
+                sfd.setFiskMem("36637547");
+
+
+                sfd.setUniqueSellingNumber("DY479511-OP01-0000002");
                 FreeSaleData fd = new FreeSaleData();
-                fd.setPrice(30.20);
+                fd.setPrice(28.00);
                 fd.setNetto(0);
                 fd.setPercent(0);
-                fd.setQTY(12);
+                fd.setQTY(1);
                 fd.setSign('+');
                 fd.setTaxGr('Б');
                 fd.setText1("Чушки");
@@ -167,27 +206,31 @@ public class MainActivity extends AppCompatActivity {
                 TotalFiskData tfd = new TotalFiskData();
                 tfd.setText1("Text1");
                 tfd.setText2("Text2");
-                tfd.setAmmount(903.22);
+                tfd.setAmmount(28.00);
 
                 tfd.setPayment('P');
+                //P - в брой
+                //C - кредит
+                //
 
-                ArticleSaleData asd = new ArticleSaleData();
-                asd.setQTY(1);
-                asd.setPercent(0);
-                asd.setNetto(0);
-                asd.setPLU(1);
-                asd.setPrice(0);
-                asd.setSign('+');
+//                ArticleSaleData asd = new ArticleSaleData();
+//                asd.setQTY(1);
+//                asd.setPercent(0);
+//                asd.setNetto(0);
+//                asd.setPLU(1);
+//                asd.setPrice(0);
+//                asd.setSign('+');
 
 
                 try {
                     mService.StartSellingFisk(sfd);
 
                     mService.AddFreeSale(fd);
-                    mService.AddArticleSale(asd);
+                    //mService.AddArticleSale(asd);
                     mService.TotalFisk(tfd);
                     //dbt.CancelFisk();
                     mService.EndSellingFisk();
+                    mService.CutPaper();
                     mService.Disconnect();
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
@@ -217,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                 try {
-                    mService.DailyReport(drd);
+                    //mService.DailyReport(drd);
                     mService.DailyExReport(drd);
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
@@ -288,7 +331,7 @@ public class MainActivity extends AppCompatActivity {
                 mUsbService.PrintUnderLinedString("Важен ред дейба");
 
                 mUsbService.Feed(150);
-
+                mUsbService.CutPaperPartially();
 
             }
 
@@ -356,6 +399,91 @@ public class MainActivity extends AppCompatActivity {
             }
 
         });
+
+        Button bBarcodeConnect = (Button) findViewById(R.id.bBarcodeConnect);
+        bBarcodeConnect.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                if (!mBarcodeService.Connect("General Bluetooth HID Barcode Scanner"))
+                    Toast.makeText(v.getContext(), "cannot connect",
+                            Toast.LENGTH_SHORT).show();
+
+            }
+
+        });
+        Button bReading = (Button) findViewById(R.id.bReading);
+        bReading.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                mBarcodeService.Reading();
+            }
+
+        });
+
+
+        Button bDiagnosticInfo = (Button) findViewById(R.id.bDiagnosticInfo);
+        bDiagnosticInfo.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                mService.GetDiagnosticData();
+
+            }
+
+        });
+
+
+        Button bCancelFisk = (Button) findViewById(R.id.bCancelFisk);
+        bCancelFisk.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                mService.CancelFisk();
+
+            }
+
+        });
+
+
+        Button bGetLastFisk = (Button) findViewById(R.id.bGetLastFisk);
+        bGetLastFisk.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                String s = mService.GetLastFisk();
+                Toast.makeText(MainActivity.this, s, Toast.LENGTH_LONG).show();
+
+            }
+
+        });
+
+
+        Button bPrintTest = (Button) findViewById(R.id.bPrintTest);
+        bPrintTest.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                //mService.mo
+
+            }
+
+        });
+
+        Button bAddRemoveSum = (Button) findViewById(R.id.bAddRemoveSum);
+        bAddRemoveSum.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+
+                AddRemoveSums ars= new AddRemoveSums();
+                ars.setSum(-50);
+                ars.setText1("text 1");
+                ars.setText2("text 2");
+
+                try {
+                    mService.AddRemoveSum(ars);
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        });
+
+
     }
 
     @Override
@@ -371,6 +499,9 @@ public class MainActivity extends AppCompatActivity {
 
         intent = new Intent(this, DatecsNFPBlueTooth.class);
         bindService(intent, mDatecsNFPConnection, Context.BIND_AUTO_CREATE);
+
+        intent = new Intent(this, DaisyBarcodeBlueTooth.class);
+        bindService(intent, mBarcodeConnection, Context.BIND_AUTO_CREATE);
     }
 
 
@@ -445,4 +576,27 @@ public class MainActivity extends AppCompatActivity {
             mUsbBound = false;
         }
     };
+
+    private ServiceConnection mBarcodeConnection = new ServiceConnection() {
+
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            DaisyBarcodeBlueTooth.LocalBinder binder = (DaisyBarcodeBlueTooth.LocalBinder) service;
+            mBarcodeService = binder.getService();
+            mBarcodeBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+
+
+    };
+
+
 }
+
